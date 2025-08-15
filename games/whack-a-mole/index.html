@@ -1,135 +1,209 @@
-  <!DOCTYPE html>
-<html>
+      <!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Whack-a-Science</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #eef;
-    }
-    h1 {
-      color: #333;
-    }
-    .game-container {
-      display: grid;
-      grid-template-columns: repeat(3, 150px);
-      gap: 10px;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    .hole {
-      width: 150px;
-      height: 100px;
-      background-color: #ccc;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      user-select: none;
-    }
-    .fact {
-      background-color: #ffd700;
-      padding: 5px;
-      border-radius: 5px;
-    }
-    #score {
-      font-size: 20px;
-      margin-top: 20px;
-    }
-    #timer {
-      font-size: 18px;
-      margin-top: 5px;
-    }
-    button {
-      margin-top: 15px;
-      padding: 10px 15px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Whack the Words — Science Edition</title>
+<style>
+  :root{
+    --bg:#0e1324; --panel:#161b31; --hole:#223; --active:#ff7a59; --text:#e9eeff; --muted:#9aa6d1; --accent:#55d6ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    background:
+      radial-gradient(900px 700px at 100% -10%, #1e2450 0%, transparent 60%),
+      radial-gradient(900px 700px at 0% 110%, #13183c 0%, transparent 60%),
+      var(--bg);
+    color: var(--text); min-height:100svh; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .app{
+    width:min(900px,100%); background:var(--panel); border:1px solid #28305c; border-radius:18px; padding:16px;
+    box-shadow:0 20px 50px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  header{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+  h1{font-size:clamp(18px,2.5vw,24px); margin:0}
+  .controls{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  button{
+    background:#1a2150; color:var(--text); border:1px solid #2c3779; border-radius:12px; padding:10px 14px; font:inherit;
+    cursor:pointer; transition:transform .05s ease, background .2s ease, border-color .2s ease;
+  }
+  button:hover{background:#232d6b}
+  button:active{transform:translateY(1px)}
+  .stat{
+    display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:12px; color:var(--muted);
+    border:1px dashed #354078;
+  }
+  .stat strong{color:var(--accent)}
+  .grid{
+    margin-top:14px; display:grid; grid-template-columns:repeat(3, minmax(100px, 1fr)); gap:14px;
+  }
+  .hole{
+    height:110px; background:linear-gradient(180deg,#161c3a,#121733); border:1px solid #28305c; border-radius:16px;
+    display:grid; place-items:center; user-select:none; position:relative; overflow:hidden;
+  }
+  .word{
+    position:absolute; inset:8px; display:grid; place-items:center; text-align:center; padding:8px 10px; line-height:1.2;
+    font-weight:800; letter-spacing:.2px; border-radius:12px; border:1px solid #ffb19e;
+    background:linear-gradient(180deg,#ff8f6f,#ff6f6f); color:#fff; box-shadow:0 8px 22px rgba(255,122,89,.35);
+    transform:translateY(8px); opacity:0; transition:opacity .12s ease, transform .12s ease;
+  }
+  .word.show{opacity:1; transform:translateY(0)}
+  .footer{margin-top:12px; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px}
+  @media (max-width:520px){
+    .grid{grid-template-columns:repeat(2,minmax(120px,1fr))}
+  }
+</style>
 </head>
 <body>
+  <div class="app" role="application" aria-label="Whack the Words – Science Edition">
+    <header>
+      <h1>🔨 Whack the Words — Science Edition</h1>
+      <div class="controls">
+        <button id="startBtn">Start (30s)</button>
+        <button id="restartBtn" title="Restart the round">Restart</button>
+        <span class="stat">⏳ Time: <strong id="time">30</strong>s</span>
+        <span class="stat">⭐ Score: <strong id="score">0</strong></span>
+      </div>
+    </header>
 
-<h1>Whack-a-Science</h1>
-<div id="score">Score: 0</div>
-<div id="timer">Time left: 30</div>
-<div class="game-container" id="game"></div>
-<button onclick="startGame()">Start Game</button>
+    <main class="grid" id="grid" aria-label="Holes">
+      <!-- holes injected -->
+    </main>
+
+    <div class="footer">
+      <small>Click the appearing 2–3 word science terms to score. Missed ones vanish after a moment.</small>
+      <small>Tip: Faster clicks = higher score!</small>
+    </div>
+  </div>
 
 <script>
-  const facts = [
-    "Water boils at 100°C",
-    "The Sun is a star",
-    "Earth has one moon",
-    "Humans have 206 bones",
-    "Light travels faster than sound",
-    "Plants make oxygen",
-    "Mercury is closest to Sun",
-    "Sharks have no bones",
-    "Bananas are berries",
-    "Octopuses have 3 hearts"
+(() => {
+  // 2–3 word science terms
+  const WORDS = [
+    "Black Hole","Cell Wall","Solar Flare","Dark Matter","DNA Helix","Quantum Spin","Lava Flow",
+    "Star Cluster","Greenhouse Gas","Neural Network","Plate Tectonics","Photon Burst","Tidal Force",
+    "Magnetic Field","Acid Rain","Gamma Rays","Higgs Boson","Blood Plasma","Ion Thruster",
+    "Comet Tail","Event Horizon","Charge Carrier","Double Helix","Gas Giant","Gene Expression",
+    "Thermal Energy","Sound Wave","Micro Gravity","Binary Star","Glacial Melt","Carbon Cycle"
   ];
 
+  // DOM
+  const grid = document.getElementById('grid');
+  const scoreEl = document.getElementById('score');
+  const timeEl = document.getElementById('time');
+  const startBtn = document.getElementById('startBtn');
+  const restartBtn = document.getElementById('restartBtn');
+
+  // Config
+  const HOLES = 9;                // 3x3
+  const ROUND_SECONDS = 30;       // fixed 30s as requested
+  const SPAWN_INTERVAL = 900;     // how often a word appears
+  const VISIBLE_MS = 900;         // how long a word stays visible
+
+  // State
   let score = 0;
-  let timeLeft = 30;
-  let gameInterval;
-  let countdownInterval;
+  let timeLeft = ROUND_SECONDS;
+  let spawnTimer = null;
+  let countdownTimer = null;
+  let running = false;
+  let lastHoleIndex = -1;
 
-  const gameContainer = document.getElementById('game');
-  for (let i = 0; i < 9; i++) {
+  // Build holes
+  for (let i = 0; i < HOLES; i++) {
     const hole = document.createElement('div');
-    hole.classList.add('hole');
-    gameContainer.appendChild(hole);
+    hole.className = 'hole';
+    hole.setAttribute('role','button');
+    hole.setAttribute('aria-label','Hole');
+    grid.appendChild(hole);
+  }
+  const holeEls = [...document.querySelectorAll('.hole')];
+
+  function randWord() {
+    return WORDS[Math.floor(Math.random() * WORDS.length)];
+    // (pure random each time)
   }
 
-  function randomHole() {
-    const holes = document.querySelectorAll('.hole');
-    return holes[Math.floor(Math.random() * holes.length)];
+  function randHoleIndex() {
+    // avoid repeating the same hole twice in a row for better feel
+    let idx;
+    do { idx = Math.floor(Math.random() * holeEls.length); }
+    while (idx === lastHoleIndex && holeEls.length > 1);
+    lastHoleIndex = idx;
+    return idx;
   }
 
-  function showFact() {
-    const hole = randomHole();
-    if (!hole.textContent) {
-      const fact = facts[Math.floor(Math.random() * facts.length)];
-      hole.innerHTML = `<div class="fact">${fact}</div>`;
-      hole.onclick = function() {
-        score++;
-        document.getElementById('score').textContent = `Score: ${score}`;
-        hole.textContent = '';
-        hole.onclick = null;
-      };
-      setTimeout(() => {
-        hole.textContent = '';
-        hole.onclick = null;
-      }, 1500);
-    }
+  function spawnWord() {
+    if (!running) return;
+    const idx = randHoleIndex();
+    const hole = holeEls[idx];
+
+    // Prevent stacking if a word is already active
+    if (hole.querySelector('.word')) return;
+
+    const word = document.createElement('div');
+    word.className = 'word';
+    word.textContent = randWord();
+    // Click to score
+    word.addEventListener('click', (e) => {
+      if (!running) return;
+      score++;
+      scoreEl.textContent = String(score);
+      // remove immediately on hit
+      word.remove();
+    }, { once: true });
+
+    hole.appendChild(word);
+    // animate in
+    requestAnimationFrame(() => word.classList.add('show'));
+
+    // auto-remove after visibility window
+    setTimeout(() => {
+      word?.remove();
+    }, VISIBLE_MS);
   }
 
-  function startGame() {
-    score = 0;
-    timeLeft = 30;
-    document.getElementById('score').textContent = `Score: ${score}`;
-    document.getElementById('timer').textContent = `Time left: ${timeLeft}`;
-    clearInterval(gameInterval);
-    clearInterval(countdownInterval);
+  function startRound() {
+    // reset
+    stopRound();
+    score = 0; scoreEl.textContent = '0';
+    timeLeft = ROUND_SECONDS; timeEl.textContent = String(timeLeft);
+    running = true;
 
-    gameInterval = setInterval(showFact, 800);
-    countdownInterval = setInterval(() => {
+    // timers
+    spawnTimer = setInterval(spawnWord, SPAWN_INTERVAL);
+    countdownTimer = setInterval(() => {
       timeLeft--;
-      document.getElementById('timer').textContent = `Time left: ${timeLeft}`;
-      if (timeLeft <= 0) {
-        clearInterval(gameInterval);
-        clearInterval(countdownInterval);
-        alert(`Time's up! Your final score is ${score}`);
-      }
+      timeEl.textContent = String(timeLeft);
+      if (timeLeft <= 0) endRound();
     }, 1000);
   }
-</script>
 
+  function endRound() {
+    running = false;
+    stopTimers();
+    // clear any remaining words
+    document.querySelectorAll('.word').forEach(w => w.remove());
+    alert(`Time's up! Final score: ${score}`);
+  }
+
+  function stopTimers() {
+    if (spawnTimer) { clearInterval(spawnTimer); spawnTimer = null; }
+    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  }
+
+  function stopRound() {
+    running = false;
+    stopTimers();
+    document.querySelectorAll('.word').forEach(w => w.remove());
+  }
+
+  // Events
+  startBtn.addEventListener('click', () => {
+    if (!running) startRound();
+  });
+  restartBtn.addEventListener('click', () => startRound());
+})();
+</script>
 </body>
 </html>
