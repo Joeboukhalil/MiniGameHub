@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whack-a-Mole</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #c3f0c8;
+  }
+  h1 {
+    margin-top: 10px;
+  }
+  .controls {
+    margin: 10px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 120px);
+    grid-gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .hole {
+    width: 120px;
+    height: 120px;
+    background: #8b5a2b;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .mole {
+    width: 100%;
+    height: 100%;
+    background: url('https://i.ibb.co/6Zz7ykW/mole.png') no-repeat center/contain;
+    position: absolute;
+    bottom: -100%;
+    transition: bottom 0.2s;
+  }
+  .show {
+    bottom: 0;
+  }
+  .stats {
+    font-size: 1.2em;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Whack-a-Mole</h1>
+
+<div class="controls">
+  <label for="timeSelect">Game Time: </label>
+  <select id="timeSelect">
+    <option value="30">30 Seconds</option>
+    <option value="45">45 Seconds</option>
+    <option value="60">1 Minute</option>
+    <option value="120">2 Minutes</option>
+  </select>
+  <button id="startBtn">Start Game</button>
+  <button id="restartBtn">Restart</button>
+</div>
+
+<div class="stats">
+  <span>Score: <span id="score">0</span></span> |
+  <span>Time Left: <span id="timeLeft">0</span> s</span>
+</div>
+
+<div class="grid" id="gameGrid">
+  <!-- Holes will be created here -->
+</div>
+
+<script>
+  const grid = document.getElementById("gameGrid");
+  const scoreDisplay = document.getElementById("score");
+  const timeLeftDisplay = document.getElementById("timeLeft");
+  const timeSelect = document.getElementById("timeSelect");
+  const startBtn = document.getElementById("startBtn");
+  const restartBtn = document.getElementById("restartBtn");
+
+  let score = 0;
+  let timeLeft = 0;
+  let moleTimer;
+  let countdown;
+  let gameRunning = false;
+
+  // Create 9 holes
+  for (let i = 0; i < 9; i++) {
+    const hole = document.createElement("div");
+    hole.classList.add("hole");
+    const mole = document.createElement("div");
+    mole.classList.add("mole");
+    hole.appendChild(mole);
+    grid.appendChild(hole);
+
+    mole.addEventListener("click", () => {
+      if (gameRunning && mole.classList.contains("show")) {
+        score++;
+        scoreDisplay.textContent = score;
+        mole.classList.remove("show");
+      }
+    });
+  }
+
+  const holes = document.querySelectorAll(".hole .mole");
+
+  function randomMole() {
+    holes.forEach(m => m.classList.remove("show"));
+    const random = Math.floor(Math.random() * holes.length);
+    holes[random].classList.add("show");
+  }
+
+  function startGame() {
+    score = 0;
+    scoreDisplay.textContent = score;
+    timeLeft = parseInt(timeSelect.value);
+    timeLeftDisplay.textContent = timeLeft;
+    gameRunning = true;
+
+    moleTimer = setInterval(randomMole, 800);
+    countdown = setInterval(() => {
+      timeLeft--;
+      timeLeftDisplay.textContent = timeLeft;
+      if (timeLeft <= 0) endGame();
+    }, 1000);
+  }
+
+  function endGame() {
+    gameRunning = false;
+    clearInterval(moleTimer);
+    clearInterval(countdown);
+    holes.forEach(m => m.classList.remove("show"));
+    alert("Time's up! Your score: " + score);
+  }
+
+  startBtn.addEventListener("click", () => {
+    if (!gameRunning) startGame();
+  });
+
+  restartBtn.addEventListener("click", () => {
+    endGame();
+    startGame();
+  });
+</script>
+
+</body>
+</html>
