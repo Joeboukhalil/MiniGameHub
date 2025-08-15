@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Science Memory Game</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: #f0f8ff;
+    }
+    h1 {
+        margin-top: 20px;
+    }
+    #controls {
+        margin-bottom: 15px;
+    }
+    select, button {
+        padding: 8px;
+        margin: 5px;
+        font-size: 16px;
+    }
+    #timer {
+        font-size: 20px;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    #game-board {
+        display: grid;
+        grid-template-columns: repeat(4, 100px);
+        grid-gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    .card {
+        width: 100px;
+        height: 100px;
+        background-color: #4CAF50;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 8px;
+    }
+    .flipped {
+        background-color: white;
+        color: black;
+        cursor: default;
+    }
+    .matched {
+        background-color: lightgray;
+        cursor: default;
+    }
+</style>
+</head>
+<body>
+
+<h1>🔬 Science Memory Game</h1>
+
+<div id="controls">
+    <label for="timeSelect">⏳ Select Time: </label>
+    <select id="timeSelect">
+        <option value="20">20 sec</option>
+        <option value="30">30 sec</option>
+        <option value="45">45 sec</option>
+        <option value="60">1 min</option>
+        <option value="90">1 min 30 sec</option>
+        <option value="120">2 min</option>
+    </select>
+    <button onclick="startGame()">Start</button>
+    <button onclick="restartGame()">Restart</button>
+</div>
+
+<div id="timer">Time: 0:00</div>
+<div id="game-board"></div>
+
+<script>
+const scienceConcepts = [
+    "Atom", "Atom",
+    "Gravity", "Gravity",
+    "Cell", "Cell",
+    "Energy", "Energy",
+    "Molecule", "Molecule",
+    "Force", "Force",
+    "DNA", "DNA",
+    "Planet", "Planet"
+];
+
+let flippedCards = [];
+let matchedCards = [];
+let timer;
+let timeRemaining;
+let gameStarted = false;
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function createBoard() {
+    const gameBoard = document.getElementById("game-board");
+    gameBoard.innerHTML = "";
+    shuffledConcepts = [...scienceConcepts];
+    shuffle(shuffledConcepts);
+
+    shuffledConcepts.forEach(concept => {
+        const card = document.createElement("div");
+        card.classList.add("card");
+        card.dataset.value = concept;
+        card.textContent = "";
+        card.addEventListener("click", () => flipCard(card));
+        gameBoard.appendChild(card);
+    });
+}
+
+function flipCard(card) {
+    if (flippedCards.length < 2 && !card.classList.contains("flipped") && !card.classList.contains("matched")) {
+        card.classList.add("flipped");
+        card.textContent = card.dataset.value;
+        flippedCards.push(card);
+
+        if (flippedCards.length === 2) {
+            checkMatch();
+        }
+    }
+}
+
+function checkMatch() {
+    const [card1, card2] = flippedCards;
+    if (card1.dataset.value === card2.dataset.value) {
+        card1.classList.add("matched");
+        card2.classList.add("matched");
+        matchedCards.push(card1, card2);
+        if (matchedCards.length === scienceConcepts.length) {
+            clearInterval(timer);
+            alert("🎉 You won!");
+        }
+    } else {
+        setTimeout(() => {
+            card1.classList.remove("flipped");
+            card2.classList.remove("flipped");
+            card1.textContent = "";
+            card2.textContent = "";
+        }, 800);
+    }
+    flippedCards = [];
+}
+
+function startTimer(duration) {
+    timeRemaining = duration;
+    updateTimerDisplay();
+    clearInterval(timer);
+    timer = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay();
+        if (timeRemaining <= 0) {
+            clearInterval(timer);
+            alert("⏳ Time's up!");
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    let minutes = Math.floor(timeRemaining / 60);
+    let seconds = timeRemaining % 60;
+    document.getElementById("timer").textContent = `Time: ${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function startGame() {
+    let selectedTime = parseInt(document.getElementById("timeSelect").value);
+    createBoard();
+    matchedCards = [];
+    flippedCards = [];
+    gameStarted = true;
+    startTimer(selectedTime);
+}
+
+function restartGame() {
+    if (gameStarted) {
+        startGame();
+    } else {
+        alert("Please start the game first!");
+    }
+}
+</script>
+
+</body>
+</html>
